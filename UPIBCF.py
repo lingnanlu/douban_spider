@@ -9,7 +9,7 @@ from surprise import Reader
 from surprise import dump
 import pandas as pd
 import numpy as np
-
+import math
 
 class UPIBCF(AlgoBase):
 
@@ -38,6 +38,7 @@ class UPIBCF(AlgoBase):
 
         self.iuid_2_UPI = {iuid: self.UPI_from(iuid) for iuid in trainset.all_users()}
 
+
     def estimate(self, u, i):
 
         if not (self.trainset.knows_user(u) and self.trainset.knows_item(i)):
@@ -59,19 +60,40 @@ class UPIBCF(AlgoBase):
         return self.UPI['std'][self.trainset.to_raw_uid(iuid)]
 
     # user comment index
+    @classmethod
     def compute_UCI(self, raw_rating_df):
 
-        comment_stats = raw_rating_df.groupby(['uid', 'comment_type']).size().unstack().fillna(0)
+        RNMUS = self.compute_RNMUS(raw_rating_df)
+        IHot = self.compute_IHot(raw_rating_df)
+        IHot.index.name = 'hot'
 
-        comment_stats['sum'] = comment_stats[0] + comment_stats[1] + comment_stats[2]
+        temp = pd.merge(raw_rating_df, IHot.to_frame(), left_on='iid', right_index=True)
+        # comment_stats = raw_rating_df.groupby(['uid', 'comment_type']).size().unstack().fillna(0)
+
+        # comment_stats['sum'] = comment_stats[0] + comment_stats[1] + comment_stats[2]
+
 
         # 评论指数计算方法
-        def f(x):
-            return (10 * x[2] + x[1]) / (x[0] + x[1] + x[2])
+        def f(df):
+            df['hot'] = np.log(math.e + df['hot'] - 1)
+            return np.sum(df['comment_type'] * df['hot']) / np.sum(1 / df['hot'])
 
-        return comment_stats.apply(f, axis=1)
+        UCI = temp.groupby('uid').apply(f)
+
+        d = pd.concat([RNMUS, UCI], axis=1)
+
+        return 0.2 * d[0] + 0.8 * d[1]
+
+    # 用户所看电影数相对与看电影最多用户的比值，比值越来，说明用户所看电影越多
+    @classmethod
+    def compute_RNMUS(self, raw_rating_df):
+
+        temp = raw_rating_df.groupby('uid').size()
+
+        return temp / np.max(temp)
 
     # user rating date index
+    @classmethod
     def compute_URDI(self, raw_rating_df):
 
         rating_date_stats = raw_rating_df.groupby(['uid', 'date']).size()
@@ -93,6 +115,7 @@ class UPIBCF(AlgoBase):
             rename(columns={0:'sum', 1:'std'})
 
     # user profession index
+    @classmethod
     def compute_UPI(self, UCI, URDI):
 
         return pd.\
@@ -132,6 +155,13 @@ class UPIBCF(AlgoBase):
         est = sum_ratings / sum_prof
         details = {'actual_k': actual_k}
         return est, details
+
+    # 用户被打分越多，说明越热门，在计算UCI中，权重越低
+    @classmethod
+    def compute_IHot(self, raw_rating_df):
+
+        return raw_rating_df.groupby('iid').size()
+
 
 if __name__ == '__main__':
 
