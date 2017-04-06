@@ -7,9 +7,11 @@ from surprise import PredictionImpossible
 from surprise import print_perf
 from surprise import Reader
 from surprise import dump
+from scipy import stats
 import pandas as pd
 import numpy as np
 import math
+
 
 class UPIBCF(AlgoBase):
 
@@ -65,24 +67,22 @@ class UPIBCF(AlgoBase):
 
         RNMUS = self.compute_RNMUS(raw_rating_df)
         IHot = self.compute_IHot(raw_rating_df)
-        IHot.index.name = 'hot'
+        IHot = IHot.to_frame('hot')
 
-        temp = pd.merge(raw_rating_df, IHot.to_frame(), left_on='iid', right_index=True)
+        temp = pd.merge(raw_rating_df, IHot, left_on='iid', right_index=True)
         # comment_stats = raw_rating_df.groupby(['uid', 'comment_type']).size().unstack().fillna(0)
 
         # comment_stats['sum'] = comment_stats[0] + comment_stats[1] + comment_stats[2]
 
-
         # 评论指数计算方法
         def f(df):
-            df['hot'] = np.log(math.e + df['hot'] - 1)
-            return np.sum(df['comment_type'] * df['hot']) / np.sum(1 / df['hot'])
+            df['hot_weight'] = 1 / np.log(math.e + df['hot'] - 1)
+            return np.sum(df['comment_type'] * df['hot_weight']) / np.sum(df['hot_weight'])
 
-        UCI = temp.groupby('uid').apply(f)
+        temp = temp.groupby('uid').apply(f)
+        temp = pd.concat([RNMUS, temp], axis=1)
 
-        d = pd.concat([RNMUS, UCI], axis=1)
-
-        return 0.2 * d[0] + 0.8 * d[1]
+        return 0.3* temp[0] + 0.7 * temp[1]
 
     # 用户所看电影数相对与看电影最多用户的比值，比值越来，说明用户所看电影越多
     @classmethod
@@ -92,35 +92,49 @@ class UPIBCF(AlgoBase):
 
         return temp / np.max(temp)
 
-    # user rating date index
+    # user rating date index, 实际就是变异系数
     @classmethod
     def compute_URDI(self, raw_rating_df):
 
         rating_date_stats = raw_rating_df.groupby(['uid', 'date']).size()
 
-        def f(s):
-            s = s[s.index != '1800-01-01']
-            return np.std(s)
+        # 计算均值
+        mean = rating_date_stats.groupby(level='uid').apply(np.mean)
 
-        user_rating_date_stats_dict = {}
-        for userid, data_stats in rating_date_stats.groupby(level='uid'):
-            user_rating_date_stats_dict[userid] = [
-                np.sum(data_stats),
-                f(data_stats)
-            ]
+        rating_date_stats_withou_2 = rating_date_stats[rating_date_stats.index.get_level_values(1) != '1800-01-01']
 
-        return \
-            pd.DataFrame.\
-            from_dict(user_rating_date_stats_dict, orient='index').\
-            rename(columns={0:'sum', 1:'std'})
+        # 去除1800后，计算方差
+        std = rating_date_stats_withou_2.groupby(level='uid').apply(np.std)
+        # def f(s):
+        #     s = s[s.index != '1800-01-01']
+        #     return np.std(s)
+        #
+        # user_rating_date_stats_dict = {}
+        # for userid, data_stats in rating_date_stats.groupby(level='uid'):
+        #     user_rating_date_stats_dict[userid] = [
+        #         np.sum(data_stats),
+        #         f(data_stats)
+        #     ]
+
+        # return \
+        #     pd.DataFrame.\
+        #     from_dict(user_rating_date_stats_dict, orient='index').\
+        #     rename(columns={0:'sum', 1:'std'})
+
+        return std / mean
 
     # user profession index
     @classmethod
     def compute_UPI(self, UCI, URDI):
 
-        return pd.\
-            concat([UCI,URDI['sum'],URDI['std']],axis=1).\
-            rename(columns={0: 'UCI'})
+        # return pd.\
+        #     concat([UCI,URDI['sum'],URDI['std']],axis=1).\
+        #     rename(columns={0: 'UCI'})
+
+        # 0.5后期可以调整
+
+        uci_urdi = pd.concat([UCI, URDI], axis=1)
+        return 0.5 * UCI + 0.5 / URDI
 
     def estimate_by_traditional_CF(self, i, u):
 
