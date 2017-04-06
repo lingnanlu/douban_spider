@@ -35,9 +35,6 @@ class UBCFBase(AlgoBase):
         self.sim = self.compute_similarities()
         self.behavier_sim = self.compute_behavier_similarities()
 
-        # self.UPI = self.compute_UPI(self.UCI, self.URDI)
-        # self.iuid_2_UPI = {iuid: self.UPI_from(iuid) for iuid in trainset.all_users()}
-
     def compute_behavier_similarities(self):
 
         self.UCI = self.compute_UCI(self.raw_rating_df)
@@ -46,26 +43,6 @@ class UBCFBase(AlgoBase):
         user_behavior_matrix = pd.concat([self.UCI, self.URDI], axis=1)
 
         # 计算用户行为相似度矩阵
-
-    def estimate(self, u, i):
-        pass
-        # if not (self.trainset.knows_user(u) and self.trainset.knows_item(i)):
-        #     # 如果训练集中没有该用户或商品， 在父类中Catch该异常，设置平均分
-        #     raise PredictionImpossible('User and/or item is unknown')
-        #
-        # est, details,  = self.estimate_by_UPIBCF(i, u)
-        # return est, details
-
-    # 这里是具体融合用户专业度后的推荐算法，所以融合的方法在这里定义
-    # def estimate_by_UPIBCF(self, i, u):
-    #     est1, details1 = self.estimate_by_traditional_CF(i, u)
-    #     est2, details2 = self.estimate_by_UPI(i, u)
-    #     est = 0.5 * est1 + 0.5 * est2
-    #     return est, details1
-
-    # def UPI_from(self, iuid):
-    #
-    #     return self.UPI['std'][self.trainset.to_raw_uid(iuid)]
 
     # user comment index
     @classmethod
@@ -85,9 +62,6 @@ class UBCFBase(AlgoBase):
         IHot = IHot.to_frame('hot')
 
         temp = pd.merge(raw_rating_df, IHot, left_on='iid', right_index=True)
-        # comment_stats = raw_rating_df.groupby(['uid', 'comment_type']).size().unstack().fillna(0)
-
-        # comment_stats['sum'] = comment_stats[0] + comment_stats[1] + comment_stats[2]
 
         # 评论指数计算方法
         def f(df):
@@ -112,36 +86,9 @@ class UBCFBase(AlgoBase):
 
         # 去除1800后，计算方差
         std = rating_date_stats_withou_2.groupby(level='uid').apply(np.std)
-        # def f(s):
-        #     s = s[s.index != '1800-01-01']
-        #     return np.std(s)
-        #
-        # user_rating_date_stats_dict = {}
-        # for userid, data_stats in rating_date_stats.groupby(level='uid'):
-        #     user_rating_date_stats_dict[userid] = [
-        #         np.sum(data_stats),
-        #         f(data_stats)
-        #     ]
-
-        # return \
-        #     pd.DataFrame.\
-        #     from_dict(user_rating_date_stats_dict, orient='index').\
-        #     rename(columns={0:'sum', 1:'std'})
 
         return std / mean
 
-    # user profession index
-    # @classmethod
-    # def compute_UPI(self, UCI, URDI):
-    #
-    #     # return pd.\
-    #     #     concat([UCI,URDI['sum'],URDI['std']],axis=1).\
-    #     #     rename(columns={0: 'UCI'})
-    #
-    #     # 0.5后期可以调整
-    #
-    #     uci_urdi = pd.concat([UCI, URDI], axis=1)
-    #     return 0.5 * UCI + 0.5 / URDI
 
     def estimate_by_traditional_CF(self, i, u):
 
@@ -162,37 +109,6 @@ class UBCFBase(AlgoBase):
         details = {'actual_k': actual_k}
         return est, details
 
-    # def estimate_by_UPI(self, i, u):
-    #
-    #     prof_user_rates = [(v, self.iuid_2_UPI[v], r) for (v, r) in self.trainset.ir[i]]
-    #     prof_user_rates = sorted(prof_user_rates, key=lambda x: x[1], reverse=True)
-    #
-    #     sum_prof = sum_ratings = actual_k = 0
-    #     for (_, prof, r) in prof_user_rates[:self.k]:
-    #         if prof > 0:
-    #             sum_prof += prof
-    #             sum_ratings += prof * r
-    #             actual_k += 1
-    #     est = sum_ratings / sum_prof
-    #     details = {'actual_k': actual_k}
-    #     return est, details
-
-    # 用户被打分越多，说明越热门，在计算UCI中，权重越低
-
-# if __name__ == '__main__':
-#
-#     reader = Reader(line_format='user item rating', sep=':')
-#
-#     data = Dataset.load_from_file('new_usr_ratings.txt', reader=reader)
-#
-#     data.split(n_folds=2)
-#
-#     algo = UBCFBase()
-#
-#     perf = evaluate(algo, data, measures=['RMSE', 'MAE'])
-#
-# else:
-#     pass
 
 
 
