@@ -18,6 +18,8 @@ class FS_Threshold(UBCFBase):
         pass
 
     def get_fusion_sim(self, sim, behavier_sim):
+
+
         pass
 
 

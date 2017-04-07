@@ -1,13 +1,8 @@
 # coding=utf-8
 
-from surprise import evaluate
-from surprise import Dataset
 from surprise import AlgoBase
 from surprise import PredictionImpossible
-from surprise import print_perf
-from surprise import Reader
-from surprise import dump
-from scipy import stats
+from sklearn.metrics.pairwise import pairwise_distances
 import pandas as pd
 import numpy as np
 import math
@@ -42,7 +37,9 @@ class UBCFBase(AlgoBase):
 
         user_behavior_matrix = pd.concat([self.UCI, self.URDI], axis=1)
 
-        # 计算用户行为相似度矩阵
+        user_behavior_sim_matrix = pairwise_distances(user_behavior_matrix, metric='euclidean')
+
+        return pd.DataFrame(user_behavior_sim_matrix, index=user_behavior_matrix.index, columns=user_behavior_matrix.index)
 
     # user comment index
     @classmethod
