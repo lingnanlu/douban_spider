@@ -7,58 +7,60 @@ import pandas as pd
 import numpy as np
 import math
 
-
 class UBCFBase(AlgoBase):
 
-    def __init__(self, k=40, min_k=1, raw_rating_file='new_ratings_all.txt', sim_options={}, **kwargs):
+    def __init__(self, assist_rating_file, k=40, min_k=1, sim_options={}, **kwargs):
 
         AlgoBase.__init__(self, sim_options=sim_options, **kwargs)
         self.k = k
         self.min_k = min_k
-        self.raw_rating_file = raw_rating_file
-
-        self.raw_rating_df = pd.read_csv(self.raw_rating_file,
+        self.assist_rating_df = pd.read_csv(
+                                    assist_rating_file,
                                     sep=':',
                                     header=None,
                                     names=['uid', 'iid', 'rating', 'date', 'comment_type'],
-                                    dtype={'uid': np.str, 'iid': np.str})
+                                    dtype={'uid': np.str, 'iid': np.str}
+        )
 
     def train(self, trainset):
 
         AlgoBase.train(self, trainset)
 
+        self.trainset_assist_rating_df = self.get_trainset_assist_rating_df()
+        self.UCI = self.compute_UCI()
+        self.URDI = self.compute_URDI()
         self.sim = self.compute_similarities()
-        self.behavier_sim = self.compute_behavier_similarities()
+        self.behavior_sim = self.compute_behavior_similarities()
 
-    def compute_behavier_similarities(self):
+    def compute_behavior_similarities(self):
 
-        self.UCI = self.compute_UCI(self.raw_rating_df)
-        self.URDI = self.compute_URDI(self.raw_rating_df)
+        print('Computing the behavior similarity matrix...')
 
         user_behavior_matrix = pd.concat([self.UCI, self.URDI], axis=1)
-
         user_behavior_sim_matrix = pairwise_distances(user_behavior_matrix, metric='euclidean')
+        print('Done computing behavior similarity matrix')
+        # return pd.DataFrame(user_behavior_sim_matrix, index=user_behavior_matrix.index, columns=user_behavior_matrix.index)
+        # 该矩阵目前是科学计数法表示，没有index和column
+        return user_behavior_sim_matrix
 
-        return pd.DataFrame(user_behavior_sim_matrix, index=user_behavior_matrix.index, columns=user_behavior_matrix.index)
 
     # user comment index
-    @classmethod
-    def compute_UCI(self, raw_rating_df):
+    def compute_UCI(self):
 
         # 用户所看电影数相对与看电影最多用户的比值，比值越来，说明用户所看电影越多
-        def compute_RNMUS(raw_rating_df):
-            temp = raw_rating_df.groupby('uid').size()
+        def compute_RNMUS(trainset_assist_rating_df):
+            temp = trainset_assist_rating_df.groupby('uid').size()
 
             return temp / np.max(temp)
 
-        def compute_IHot(raw_rating_df):
-            return raw_rating_df.groupby('iid').size()
+        def compute_IHot(trainset_assist_rating_df):
+            return trainset_assist_rating_df.groupby('iid').size()
 
-        RNMUS = compute_RNMUS(raw_rating_df)
-        IHot = compute_IHot(raw_rating_df)
+        RNMUS = compute_RNMUS(self.trainset_assist_rating_df)
+        IHot = compute_IHot(self.trainset_assist_rating_df)
         IHot = IHot.to_frame('hot')
 
-        temp = pd.merge(raw_rating_df, IHot, left_on='iid', right_index=True)
+        temp = pd.merge(self.trainset_assist_rating_df, IHot, left_on='iid', right_index=True)
 
         # 评论指数计算方法
         def f(df):
@@ -71,10 +73,9 @@ class UBCFBase(AlgoBase):
         return 0.3* temp[0] + 0.7 * temp[1]
 
     # user rating date index, 实际就是变异系数
-    @classmethod
-    def compute_URDI(self, raw_rating_df):
+    def compute_URDI(self):
 
-        rating_date_stats = raw_rating_df.groupby(['uid', 'date']).size()
+        rating_date_stats = self.trainset_assist_rating_df.groupby(['uid', 'date']).size()
 
         # 计算均值
         mean = rating_date_stats.groupby(level='uid').apply(np.mean)
@@ -86,8 +87,7 @@ class UBCFBase(AlgoBase):
 
         return std / mean
 
-
-    def estimate_by_traditional_CF(self, i, u):
+    def estimate_by_cf(self, i, u):
 
         # 得到所以评价过商品i的用户
         neighbors = [(v, self.sim[u, v], r) for (v, r) in self.trainset.ir[i]]
@@ -105,6 +105,19 @@ class UBCFBase(AlgoBase):
         est = sum_ratings / sum_sim
         details = {'actual_k': actual_k}
         return est, details
+
+    # 获得训练集所对应的原始数据集
+    def get_trainset_assist_rating_df(self):
+
+        trainset_users = [self.trainset.to_raw_uid(iuid) for iuid in self.trainset.all_users()]
+        trainset_assist_rating_df = self.assist_rating_df[self.assist_rating_df['uid'].isin(trainset_users)]
+
+        trainset_assist_rating_df.uid = trainset_assist_rating_df.uid.map(self.trainset.to_inner_uid)
+
+        return trainset_assist_rating_df
+
+
+
 
 
 

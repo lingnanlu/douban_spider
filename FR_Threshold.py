@@ -3,11 +3,9 @@ from UBCFBase import UBCFBase
 
 class FR_Threshold(UBCFBase):
 
-
     def __init__(self, k=40, min_k=1, threshold=10, sim_options={}, **kwargs):
         UBCFBase.__init__(self, k, min_k, sim_options, **kwargs)
         self.threshold = threshold
-
 
     def train(self, trainset):
         UBCFBase.train(self, trainset)
