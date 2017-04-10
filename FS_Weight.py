@@ -4,11 +4,13 @@ from surprise import PredictionImpossible
 from surprise import Reader
 from surprise import Dataset
 from surprise import evaluate, print_perf
+from surprise import GridSearch
+import numpy as np
 
 class FS_Weight(UBCFBase):
     def __init__(self, k=40, min_k=1, alpha=0.5, file='new_ratings_all.txt', sim_options={}, **kwargs):
         UBCFBase.__init__(self, file, k, min_k, sim_options, **kwargs)
-        self.alpha = 0.5
+        self.alpha = alpha
 
     def train(self, trainset):
         UBCFBase.train(self, trainset)
@@ -47,11 +49,25 @@ if __name__ == '__main__':
 
     data.split(n_folds=3)
 
-    algo = FS_Weight()
+    param_grid = {'alpha' : np.arange(0, 1, 0.1)}
+    grid_search = GridSearch(FS_Weight, param_grid, measures=['RMSE', 'FCP', 'MAE'])
 
-    perf = evaluate(algo, data, measures=['RMSE', 'MAE'])
+    grid_search.evaluate(data)
 
-    print_perf(perf)
+    print(grid_search.best_score['RMSE'])
+    print(grid_search.best_params['RMSE'])
+
+    print(grid_search.best_score['FCP'])
+    print(grid_search.best_params['FCP'])
+
+    print(grid_search.best_score['MAE'])
+    print(grid_search.best_params['MAE'])
+    # algo = FS_Weight()
+
+
+    # perf = evaluate(algo, data, measures=['RMSE', 'MAE'])
+
+    # print_perf(perf)
 
 else:
     pass
