@@ -47,30 +47,39 @@ class UBCFBase(AlgoBase):
     # user comment index
     def compute_UCI(self):
 
-        # 用户所看电影数相对与看电影最多用户的比值，比值越来，说明用户所看电影越多
-        def compute_RNMUS(trainset_assist_rating_df):
-            temp = trainset_assist_rating_df.groupby('uid').size()
+        # # 用户所看电影数相对与看电影最多用户的比值，比值越来，说明用户所看电影越多
+        # def compute_RNMUS(trainset_assist_rating_df):
+        #     temp = trainset_assist_rating_df.groupby('uid').size()
+        #
+        #     return temp / np.max(temp)
+        #
+        # def compute_IHot(trainset_assist_rating_df):
+        #     return trainset_assist_rating_df.groupby('iid').size()
+        #
+        # RNMUS = compute_RNMUS(self.trainset_assist_rating_df)
+        # IHot = compute_IHot(self.trainset_assist_rating_df)
+        # IHot = IHot.to_frame('hot')
+        #
+        # temp = pd.merge(self.trainset_assist_rating_df, IHot, left_on='iid', right_index=True)
+        #
+        # # 评论指数计算方法
+        # def f(df):
+        #     df['hot_weight'] = 1 / np.log(math.e + df['hot'] - 1)
+        #     return np.sum(df['comment_type'] * df['hot_weight']) / np.sum(df['hot_weight'])
+        #
+        # temp = temp.groupby('uid').apply(f)
+        # temp = pd.concat([RNMUS, temp], axis=1)
+        #
+        # return 0.3* temp[0] + 0.7 * temp[1]
 
-            return temp / np.max(temp)
+        # uci定义一
+        def uci_1():
+            temp = self.trainset_assist_rating_df.groupby(['uid', 'comment_type']).size().unstack().fillna(0)
 
-        def compute_IHot(trainset_assist_rating_df):
-            return trainset_assist_rating_df.groupby('iid').size()
+            return  (10 * temp[2] + temp[1])/(temp[0] + temp[1] + temp[2])
 
-        RNMUS = compute_RNMUS(self.trainset_assist_rating_df)
-        IHot = compute_IHot(self.trainset_assist_rating_df)
-        IHot = IHot.to_frame('hot')
+        return uci_1()
 
-        temp = pd.merge(self.trainset_assist_rating_df, IHot, left_on='iid', right_index=True)
-
-        # 评论指数计算方法
-        def f(df):
-            df['hot_weight'] = 1 / np.log(math.e + df['hot'] - 1)
-            return np.sum(df['comment_type'] * df['hot_weight']) / np.sum(df['hot_weight'])
-
-        temp = temp.groupby('uid').apply(f)
-        temp = pd.concat([RNMUS, temp], axis=1)
-
-        return 0.3* temp[0] + 0.7 * temp[1]
 
     # user rating date index, 实际就是变异系数
     def compute_URDI(self):
