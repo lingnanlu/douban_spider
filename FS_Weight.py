@@ -8,9 +8,9 @@ from surprise import GridSearch
 import numpy as np
 
 class FS_Weight(UBCFBase):
-    def __init__(self, k=40, min_k=1, alpha=0.5, file='new_ratings_all.txt', sim_options={}, **kwargs):
+    def __init__(self, k=40, min_k=1, beta=0.5, file='new_ratings_all.txt', sim_options={}, **kwargs):
         UBCFBase.__init__(self, file, k, min_k, sim_options, **kwargs)
-        self.alpha = alpha
+        self.beta = beta
 
     def train(self, trainset):
         UBCFBase.train(self, trainset)
@@ -19,7 +19,7 @@ class FS_Weight(UBCFBase):
 
     def get_fusion_sim(self, sim, behavior_sim):
 
-        return self.alpha * sim + (1 - self.alpha) * behavior_sim
+        return self.beta * sim + (1 - self.beta) * behavior_sim
 
     def estimate(self, u, i):
 
@@ -49,7 +49,8 @@ if __name__ == '__main__':
 
     data.split(n_folds=3)
 
-    param_grid = {'alpha' : np.arange(0, 1, 0.1)}
+    # param_grid = {'alpha' : np.arange(0, 1, 0.1)}
+    param_grid = {'beta' : [0, 0.5, 1]}
     grid_search = GridSearch(FS_Weight, param_grid, measures=['RMSE', 'FCP', 'MAE'])
 
     grid_search.evaluate(data)
