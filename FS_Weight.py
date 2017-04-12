@@ -4,12 +4,13 @@ from surprise import PredictionImpossible
 from surprise import Reader
 from surprise import Dataset
 from surprise import evaluate, print_perf
+from surprise import KNNBasic
 from surprise import GridSearch
 import numpy as np
 
 class FS_Weight(UBCFBase):
-    def __init__(self, k=40, min_k=1, beta=0.5, file='new_ratings_all.txt', sim_options={}, **kwargs):
-        UBCFBase.__init__(self, file, k, min_k, sim_options, **kwargs)
+    def __init__(self, k=40, min_k=1, alpha=0.5, beta=0.5, file='new_ratings_all.txt', sim_options={}, **kwargs):
+        UBCFBase.__init__(self, file, alpha, k, min_k, sim_options, **kwargs)
         self.beta = beta
 
     def train(self, trainset):
@@ -63,12 +64,20 @@ if __name__ == '__main__':
 
     print(grid_search.best_score['MAE'])
     print(grid_search.best_params['MAE'])
-    # algo = FS_Weight()
 
 
-    # perf = evaluate(algo, data, measures=['RMSE', 'MAE'])
-
-    # print_perf(perf)
+    # algo1 = FS_Weight(beta=1)
+    # algo2 = KNNBasic()
+    #
+    # for trainset, testset in data.folds():
+    #     algo1.train(trainset)
+    #     algo2.train(trainset)
+    #
+    #     predictions2 = algo2.test(testset)
+    #     predictions1 = algo1.test(testset)
+    #
+    #     print(predictions2[:10])
+    #     print(predictions1[:10])
 
 else:
     pass
