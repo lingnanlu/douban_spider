@@ -9,7 +9,7 @@ import math
 
 class UBCFBase(AlgoBase):
 
-    def __init__(self, assist_rating_file, alpha=0.5, k=40, min_k=1, sim_options={}, **kwargs):
+    def __init__(self, assist_rating_file, alpha, k=40, min_k=1, sim_options={}, **kwargs):
 
         AlgoBase.__init__(self, sim_options=sim_options, **kwargs)
         self.k = k
@@ -77,7 +77,7 @@ class UBCFBase(AlgoBase):
         temp = temp.groupby('uid').apply(f)
         temp = pd.concat([RNMUS, temp], axis=1)
 
-        return self.alpha * temp[0] + (1 - self.alpha) * temp[1]
+        return (1 - self.alpha) * temp[0] + self.alpha * temp[1]
 
         # # uci定义一
         # def uci_1():
