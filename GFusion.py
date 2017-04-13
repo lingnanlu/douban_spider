@@ -4,10 +4,11 @@ from surprise import Dataset
 from surprise import Reader
 from surprise import PredictionImpossible
 from surprise import print_perf, evaluate
+
 class GFusion(UBCFBase):
 
-    def __init__(self, file='new_ratings_all.txt', alpha=0.5, k=40, min_k=1, sim_options={}, **kwargs):
-        UBCFBase.__init__(self, file, alpha, k, min_k, sim_options, **kwargs)
+    def __init__(self, alpha=0.5, k=40, min_k=1, sim_options={}, **kwargs):
+        UBCFBase.__init__(self, alpha, k, min_k, sim_options, **kwargs)
 
     def train(self, trainset):
 

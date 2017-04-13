@@ -8,8 +8,8 @@ import numpy as np
 
 class FS_Threshold(UBCFBase):
 
-    def __init__(self, k=40, min_k=1, threshold=10, file='new_ratings_all.txt',sim_options={}, **kwargs):
-        UBCFBase.__init__(self, file, k, min_k, sim_options, **kwargs)
+    def __init__(self, k=40, min_k=1, threshold=10,sim_options={}, **kwargs):
+        UBCFBase.__init__(self, k, min_k, sim_options, **kwargs)
         self.threshold = threshold
 
     def train(self, trainset):

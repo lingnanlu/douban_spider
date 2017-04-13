@@ -5,8 +5,8 @@ from surprise import Dataset
 from surprise import evaluate, print_perf
 
 class FR_Weight(UBCFBase):
-    def __init__(self, k=40, min_k=1, alpha=0.5, file='new_ratings_all.txt', sim_options={}, **kwargs):
-        UBCFBase.__init__(self, file, alpha, k, min_k, sim_options, **kwargs)
+    def __init__(self, k=40, min_k=1, alpha=0.5, sim_options={}, **kwargs):
+        UBCFBase.__init__(self, alpha, k, min_k, sim_options, **kwargs)
         self.alpha = alpha
 
     def train(self, trainset):

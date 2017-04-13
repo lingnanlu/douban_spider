@@ -9,14 +9,14 @@ import math
 
 class UBCFBase(AlgoBase):
 
-    def __init__(self, assist_rating_file, alpha, k=40, min_k=1, sim_options={}, **kwargs):
+    def __init__(self, alpha, k=40, min_k=1, sim_options={}, **kwargs):
 
         AlgoBase.__init__(self, sim_options=sim_options, **kwargs)
         self.k = k
         self.min_k = min_k
         self.alpha = alpha
         self.assist_rating_df = pd.read_csv(
-                                    assist_rating_file,
+                                    'new_ratings_all.txt',
                                     sep=':',
                                     header=None,
                                     names=['uid', 'iid', 'rating', 'date', 'comment_type'],
