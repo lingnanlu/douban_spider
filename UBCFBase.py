@@ -30,6 +30,8 @@ class UBCFBase(AlgoBase):
         self.trainset_assist_rating_df = self.get_trainset_assist_rating_df()
         self.UCI = self.compute_UCI()
         self.URDI = self.compute_URDI()
+        self.user_behavior_matrix = pd.concat([self.UCI, self.URDI], axis=1)
+        # 这是基于评分的相似性计算
         self.sim = self.compute_similarities()
         self.behavior_sim = self.compute_behavior_similarities()
 
@@ -37,8 +39,7 @@ class UBCFBase(AlgoBase):
 
         print('Computing the behavior similarity matrix...')
 
-        user_behavior_matrix = pd.concat([self.UCI, self.URDI], axis=1)
-        user_behavior_sim_matrix = pairwise_distances(user_behavior_matrix, metric='euclidean')
+        user_behavior_sim_matrix = pairwise_distances(self.user_behavior_matrix, metric='euclidean')
         print('Done computing behavior similarity matrix')
         # return pd.DataFrame(user_behavior_sim_matrix, index=user_behavior_matrix.index, columns=user_behavior_matrix.index)
         # 该矩阵目前是科学计数法表示，没有index和column
@@ -102,7 +103,7 @@ class UBCFBase(AlgoBase):
 
         return std / mean
 
-    def estimate_by_cf(self, i, u):
+    def estimate_by_cf(self, u, i):
 
         # 得到所以评价过商品i的用户
         neighbors = [(v, self.sim[u, v], r) for (v, r) in self.trainset.ir[i]]

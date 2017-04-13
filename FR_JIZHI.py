@@ -1,13 +1,15 @@
+# coding=utf-8
 from UBCFBase import UBCFBase
 from surprise import PredictionImpossible
 from surprise import Reader
 from surprise import Dataset
 from surprise import evaluate, print_perf
+import math
+import numpy as np
 
-class FR_Weight(UBCFBase):
+class FR_JIZHI(UBCFBase):
     def __init__(self, k=40, min_k=1, alpha=0.5, file='new_ratings_all.txt', sim_options={}, **kwargs):
         UBCFBase.__init__(self, file, alpha, k, min_k, sim_options, **kwargs)
-        self.alpha = alpha
 
     def train(self, trainset):
         UBCFBase.train(self, trainset)
@@ -19,7 +21,11 @@ class FR_Weight(UBCFBase):
 
         est_by_rating_cf, details = UBCFBase.estimate_by_cf(self, u, i)
         est_by_behavior_cf = self.estimate_by_behavior_cf(u, i)
-        return self.alpha * est_by_rating_cf + (1 - self.alpha) * est_by_behavior_cf
+
+        if est_by_behavior_cf > est_by_rating_cf:
+            return est_by_behavior_cf
+        else:
+            return est_by_rating_cf
 
     def estimate_by_behavior_cf(self, u, i):
 
@@ -45,7 +51,7 @@ if __name__ == '__main__':
 
     data.split(n_folds=3)
 
-    algo = FR_Weight()
+    algo = FR_JIZHI()
 
     perf = evaluate(algo, data, measures=['RMSE', 'MAE'])
 
