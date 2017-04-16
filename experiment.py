@@ -14,10 +14,9 @@ import pandas as pd
 from time import gmtime, strftime
 
 reader = Reader(line_format='user item rating', sep=':')
-data = Dataset.load_from_file('new_usr_ratings.txt', reader=reader)
-
-data.split(n_folds=5)
-
+train_file = 'new_usr_ratings.train'
+test_file = 'new_usr_ratings.test'
+data = Dataset.load_from_folds([(train_file, test_file)], reader)
 
 def test_fr_jizhi():
 
