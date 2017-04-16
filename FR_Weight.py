@@ -2,12 +2,13 @@ from UBCFBase import UBCFBase
 from surprise import PredictionImpossible
 from surprise import Reader
 from surprise import Dataset
+from surprise import GridSearch
 from surprise import evaluate, print_perf
 
 class FR_Weight(UBCFBase):
-    def __init__(self, k=40, min_k=1, alpha=0.5, sim_options={}, **kwargs):
+    def __init__(self, k=40, min_k=1, alpha=0.5, beta=0.5, sim_options={}, **kwargs):
         UBCFBase.__init__(self, alpha, k, min_k, sim_options, **kwargs)
-        self.alpha = alpha
+        self.beta = beta
 
     def train(self, trainset):
         UBCFBase.train(self, trainset)
@@ -19,7 +20,7 @@ class FR_Weight(UBCFBase):
 
         est_by_rating_cf, details = UBCFBase.estimate_by_cf(self, u, i)
         est_by_behavior_cf = self.estimate_by_behavior_cf(u, i)
-        return self.alpha * est_by_rating_cf + (1 - self.alpha) * est_by_behavior_cf
+        return self.beta * est_by_rating_cf + (1 - self.beta) * est_by_behavior_cf
 
     def estimate_by_behavior_cf(self, u, i):
 
@@ -45,11 +46,14 @@ if __name__ == '__main__':
 
     data.split(n_folds=3)
 
-    algo = FR_Weight()
 
-    perf = evaluate(algo, data, measures=['RMSE', 'MAE'])
+    param_grid = {'beta': [0, 0.3, 0.6, 0.9]}
+    # param_grid = {'alpha' : np.arange(0, 1.1, 0.1), 'beta' : np.arange(0, 1.1, 0.1)}
+    grid_search = GridSearch(FR_Weight, param_grid, measures=['RMSE'])
 
-    print_perf(perf)
+    grid_search.evaluate(data)
 
+    print(grid_search.best_score['RMSE'])
+    print(grid_search.best_params['RMSE'])
 else:
     pass

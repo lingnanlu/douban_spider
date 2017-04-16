@@ -27,6 +27,7 @@ class UBCFBase(AlgoBase):
 
         AlgoBase.train(self, trainset)
 
+        # 和训练集对应的原始数据集
         self.trainset_assist_rating_df = self.get_trainset_assist_rating_df()
         self.UCI = self.compute_UCI()
         self.URDI = self.compute_URDI()
@@ -58,11 +59,11 @@ class UBCFBase(AlgoBase):
         def compute_IHot(rating_df):
             return rating_df.groupby('iid').size()
 
-        RNMUS = compute_RNMUS(self.trainset_assist_rating_df)
-        IHot = compute_IHot(self.trainset_assist_rating_df)
-        IHot = IHot.to_frame('hot')
+        self.RNMUS = compute_RNMUS(self.trainset_assist_rating_df)
+        self.IHot = compute_IHot(self.trainset_assist_rating_df)
+        self.IHot = self.IHot.to_frame('hot')
         #
-        temp = pd.merge(self.trainset_assist_rating_df, IHot, left_on='iid', right_index=True)
+        temp = pd.merge(self.trainset_assist_rating_df, self.IHot, left_on='iid', right_index=True)
         #
         # 评论指数计算方法
         def f(df):
@@ -76,7 +77,7 @@ class UBCFBase(AlgoBase):
                 return 0
 
         temp = temp.groupby('uid').apply(f)
-        temp = pd.concat([RNMUS, temp], axis=1)
+        temp = pd.concat([self.RNMUS, temp], axis=1)
 
         return (1 - self.alpha) * temp[0] + self.alpha * temp[1]
 
@@ -101,7 +102,13 @@ class UBCFBase(AlgoBase):
         # 去除1800后，计算方差
         std = rating_date_stats_withou_2.groupby(level='uid').apply(np.std)
 
-        return std / mean
+        result = std / mean
+
+        # 归一化处理
+        _max = result.max()
+        _min = result.min()
+
+        return (result - _min) / (_max - _min)
 
     def estimate_by_cf(self, u, i):
 

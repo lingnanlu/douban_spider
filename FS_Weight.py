@@ -48,44 +48,21 @@ class FS_Weight(UBCFBase):
 if __name__ == '__main__':
 
     reader = Reader(line_format='user item rating', sep=':')
-    data = Dataset.load_from_file('new_usr_ratings.txt', reader=reader)
+    train_file = 'new_usr_ratings.train'
+    test_file = 'new_usr_ratings.test'
+    data = Dataset.load_from_folds([(train_file, test_file)], reader)
 
-    data.split(n_folds=3)
-
-    # param_grid = {'alpha' : np.arange(0, 1, 0.1)}
-   # param_grid = {'beta' : [0.5], 'alpha':[0, 1]}
-    param_grid = {'alpha' : np.arange(0, 1.1, 0.1), 'beta' : np.arange(0, 1.1, 0.1)}
-    grid_search = GridSearch(FS_Weight, param_grid, measures=['RMSE', 'MAE'])
+    param_grid = {'beta' : [0, 0.3]}
+    grid_search = GridSearch(FS_Weight, param_grid, measures=['RMSE'])
 
     grid_search.evaluate(data)
 
     print(grid_search.best_score['RMSE'])
     print(grid_search.best_params['RMSE'])
 
-    # print(grid_search.best_score['FCP'])
-    # print(grid_search.best_params['FCP'])
-
-    print(grid_search.best_score['MAE'])
-    print(grid_search.best_params['MAE'])
-
     result_df = pd.DataFrame.from_dict(grid_search.cv_results)
     print(result_df)
 
     result_df.to_csv('FS_Weight_' + strftime('%m-%d-%H-%M', gmtime()))
-
-
-    # algo1 = FS_Weight(beta=1)
-    # algo2 = KNNBasic()
-    #
-    # for trainset, testset in data.folds():
-    #     algo1.train(trainset)
-    #     algo2.train(trainset)
-    #
-    #     predictions2 = algo2.test(testset)
-    #     predictions1 = algo1.test(testset)
-    #
-    #     print(predictions2[:10])
-    #     print(predictions1[:10])
-
 else:
     pass

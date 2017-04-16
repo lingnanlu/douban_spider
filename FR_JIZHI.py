@@ -23,9 +23,9 @@ class FR_JIZHI(UBCFBase):
         est_by_behavior_cf = self.estimate_by_behavior_cf(u, i)
 
         if est_by_behavior_cf > est_by_rating_cf:
-            return est_by_behavior_cf
+            return est_by_rating_cf, details
         else:
-            return est_by_rating_cf
+            return est_by_behavior_cf, details
 
     def estimate_by_behavior_cf(self, u, i):
 

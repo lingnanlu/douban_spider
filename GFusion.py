@@ -23,6 +23,8 @@ class GFusion(UBCFBase):
 
         self.trainset.ir[self.trainset.n_items] = list_0
         self.trainset.ir[self.trainset.n_items + 1] = list_1
+
+        # 全局相似度
         self.g_sim = self.compute_similarities()
 
     def estimate(self, u, i):
@@ -30,7 +32,7 @@ class GFusion(UBCFBase):
         if not (self.trainset.knows_user(u) and self.trainset.knows_item(i)):
             raise PredictionImpossible('User and/or item is unkown.')
 
-        neighbors = [(v, self.sim[u, v], r) for (v, r) in self.trainset.ir[i]]
+        neighbors = [(v, self.g_sim[u, v], r) for (v, r) in self.trainset.ir[i]]
         # sort neighbors by fusion similarity
         neighbors = sorted(neighbors, key=lambda x: x[1], reverse=True)
         # compute weighted average
@@ -52,11 +54,6 @@ if __name__ == '__main__':
     reader = Reader(line_format='user item rating', sep=':')
     data = Dataset.load_from_file('new_usr_ratings.txt', reader=reader)
     data.split(n_folds=3)
-    trainsets = []
-    for trainset, testset in data.folds():
-        trainsets.append(trainset)
-
-    first_trainset = trainsets[0]
 
     algo = GFusion()
 
