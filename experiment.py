@@ -18,7 +18,7 @@ train_file = 'new_usr_ratings.train'
 test_file = 'new_usr_ratings.test'
 data = Dataset.load_from_folds([(train_file, test_file)], reader)
 
-def test_fr_jizhi():
+def fr_jizhi():
 
     param_grid = {'k': [10, 20, 30], 'alpha':[0, 0.25, 0.5, 0.75, 1]}
 
@@ -30,7 +30,7 @@ def test_fr_jizhi():
 
     result_df.to_csv('FR_JIZHI_' + strftime('%m-%d-%H-%M', gmtime()))
 
-def test_fr_weight():
+def fr_weight():
     param_grid = {'k': [10, 20, 30], 'alpha': [0, 0.25, 0.5, 0.75, 1], 'beta':[0, 0.2, 0.4, 0.6, 0.8]}
 
     grid_search = GridSearch(FR_Weight, param_grid, measures=['RMSE', 'MAE'])
@@ -41,7 +41,7 @@ def test_fr_weight():
 
     result_df.to_csv('FR_WEIGHT_' + strftime('%m-%d-%H-%M', gmtime()))
 
-def test_fs_threshold():
+def fs_threshold():
 
     param_grid = {'k': [10, 20, 30], 'alpha': [0, 0.25, 0.5, 0.75, 1], 'threshold': [5, 10, 15, 20]}
 
@@ -53,7 +53,7 @@ def test_fs_threshold():
 
     result_df.to_csv('FS_threshold_' + strftime('%m-%d-%H-%M', gmtime()))
 
-def test_fs_weight():
+def fs_weight():
 
     param_grid = {'k': [10, 20, 30], 'alpha': [0, 0.25, 0.5, 0.75, 1], 'beta': [0, 0.2, 0.4, 0.6, 0.8]}
 
@@ -65,7 +65,7 @@ def test_fs_weight():
 
     result_df.to_csv('FS_Weight_' + strftime('%m-%d-%H-%M', gmtime()))
 
-def test_gfusion():
+def gfusion():
 
     param_grid = {'k': [10, 20, 30], 'alpha': [0, 0.25, 0.5, 0.75, 1]}
 
@@ -77,7 +77,7 @@ def test_gfusion():
 
     result_df.to_csv('GFusion_' + strftime('%m-%d-%H-%M', gmtime()))
 
-def test_knn():
+def knn():
 
     param_grid = {'k': [10, 20, 30]}
 
@@ -89,12 +89,12 @@ def test_knn():
 
     result_df.to_csv('KNNBasic_' + strftime('%m-%d-%H-%M', gmtime()))
 
-test_fr_jizhi()
-test_gfusion()
-test_fr_weight()
-test_fs_weight()
-test_fs_threshold()
-test_knn()
+#fr_jizhi()
+#gfusion()
+#fr_weight()
+#fs_weight()
+fs_threshold()
+knn()
 
 
 
