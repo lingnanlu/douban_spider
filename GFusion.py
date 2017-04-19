@@ -1,18 +1,18 @@
 # coding=utf-8
-from UBCFBase import UBCFBase
+from base import base
 from surprise import Dataset
 from surprise import Reader
 from surprise import PredictionImpossible
 from surprise import print_perf, evaluate
 
-class GFusion(UBCFBase):
+class GFusion(base):
 
     def __init__(self, alpha=0.5, k=40, min_k=1, sim_options={}, **kwargs):
-        UBCFBase.__init__(self, alpha, k, min_k, sim_options, **kwargs)
+        base.__init__(self, alpha, k, min_k, sim_options, **kwargs)
 
     def train(self, trainset):
 
-        UBCFBase.train(self, trainset)
+        base.train(self, trainset)
 
         # #将新的维度添加到评分矩阵中去
         list_0 = []

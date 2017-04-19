@@ -1,24 +1,23 @@
-from UBCFBase import UBCFBase
+from base import base
 from surprise import PredictionImpossible
 from surprise import Reader
 from surprise import Dataset
 from surprise import GridSearch
-from surprise import evaluate, print_perf
 
-class FR_Weight(UBCFBase):
+class FR_Weight(base):
     def __init__(self, k=40, min_k=1, alpha=0.5, beta=0.5, sim_options={}, **kwargs):
-        UBCFBase.__init__(self, alpha, k, min_k, sim_options, **kwargs)
+        base.__init__(self, alpha, k, min_k, sim_options, **kwargs)
         self.beta = beta
 
     def train(self, trainset):
-        UBCFBase.train(self, trainset)
+        base.train(self, trainset)
 
     def estimate(self, u, i):
 
         if not (self.trainset.knows_user(u) and self.trainset.knows_item(i)):
             raise PredictionImpossible('User and/or item is unkown.')
 
-        est_by_rating_cf, details = UBCFBase.estimate_by_cf(self, u, i)
+        est_by_rating_cf, details = base.estimate_by_cf(self, u, i)
         est_by_behavior_cf = self.estimate_by_behavior_cf(u, i)
         return self.beta * est_by_rating_cf + (1 - self.beta) * est_by_behavior_cf
 

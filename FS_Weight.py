@@ -1,22 +1,16 @@
 # coding=utf-8
-from UBCFBase import UBCFBase
+from base import base
 from surprise import PredictionImpossible
 from surprise import Reader
 from surprise import Dataset
-from surprise import evaluate, print_perf
-from surprise import KNNBasic
-from surprise import GridSearch
-from time import gmtime, strftime
-import numpy as np
-import pandas as pd
 
-class FS_Weight(UBCFBase):
+class FS_Weight(base):
     def __init__(self, k=40, min_k=1, alpha=0.5, beta=0.5, sim_options={}, **kwargs):
-        UBCFBase.__init__(self, alpha, k, min_k, sim_options, **kwargs)
+        base.__init__(self, alpha, k, min_k, sim_options, **kwargs)
         self.beta = beta
 
     def train(self, trainset):
-        UBCFBase.train(self, trainset)
+        base.train(self, trainset)
 
         self.fusion_sim = self.get_fusion_sim(self.sim, self.behavior_sim)
 
@@ -45,24 +39,60 @@ class FS_Weight(UBCFBase):
         details = {'actual_k': actual_k}
         return est, details
 
+    def recommend(self, u, k, nitem):
+
+        rank = dict()
+
+        u_rating_items = [item for item, rating in self.trainset.ur[u]]
+        # 获得用户于其它所有用户的相似度
+        neighbors = [item for item in enumerate(self.fusion_sim[u])]
+
+        # 获得K近邻
+        k_neighbors = sorted(neighbors, key=lambda x:x[1], reverse=True)[0:k]
+
+        for v, wuv in k_neighbors:
+            for item, rating in self.trainset.ur[v]:
+                if item in u_rating_items:
+                    continue
+                rank.setdefault(item, 0)
+                rank[item] += wuv * rating
+
+
+        rank = sorted(rank.items(), key=lambda x : x[1], reverse=True)[0:nitem]
+
+        return [item for item, rating in rank]
+
 if __name__ == '__main__':
 
     reader = Reader(line_format='user item rating', sep=':')
     train_file = 'new_usr_ratings.train'
     test_file = 'new_usr_ratings.test'
     data = Dataset.load_from_folds([(train_file, test_file)], reader)
+    #
+    # param_grid = {'beta' : [0, 0.3]}
+    # grid_search = GridSearch(FS_Weight, param_grid, measures=['RMSE'])
+    #
+    # grid_search.evaluate(data)
+    #
+    # print(grid_search.best_score['RMSE'])
+    # print(grid_search.best_params['RMSE'])
+    #
+    # result_df = pd.DataFrame.from_dict(grid_search.cv_results)
+    # print(result_df)
+    #
+    # result_df.to_csv('FS_Weight_' + strftime('%m-%d-%H-%M', gmtime()))
 
-    param_grid = {'beta' : [0, 0.3]}
-    grid_search = GridSearch(FS_Weight, param_grid, measures=['RMSE'])
+    trainset, testset = data.folds().next()
 
-    grid_search.evaluate(data)
+    algo = FS_Weight(beta=1)
+    algo.train(trainset)
 
-    print(grid_search.best_score['RMSE'])
-    print(grid_search.best_params['RMSE'])
+    ks = [10,20]
+    nitems = [10, 20]
+    for k in ks:
+        for nitem in nitems:
+            algo.precisionAndRecall(testset, k, nitem)
+            algo.coverage(k, nitem)
 
-    result_df = pd.DataFrame.from_dict(grid_search.cv_results)
-    print(result_df)
-
-    result_df.to_csv('FS_Weight_' + strftime('%m-%d-%H-%M', gmtime()))
 else:
     pass

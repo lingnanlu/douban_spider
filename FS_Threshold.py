@@ -1,20 +1,20 @@
 # coding=utf-8
-from UBCFBase import UBCFBase
+from base import base
 from surprise import Reader
 from surprise import Dataset
 from surprise import evaluate, print_perf
 from surprise import PredictionImpossible
 import numpy as np
 
-class FS_Threshold(UBCFBase):
+class FS_Threshold(base):
 
     def __init__(self, k=40, min_k=1, alpha=0.5, threshold=10,sim_options={}, **kwargs):
-        UBCFBase.__init__(self, alpha, k, min_k, sim_options, **kwargs)
+        base.__init__(self, alpha, k, min_k, sim_options, **kwargs)
         self.threshold = threshold
 
     def train(self, trainset):
 
-        UBCFBase.train(self, trainset)
+        base.train(self, trainset)
 
         self.fusion_sim = self.get_fusion_sim(self.sim, self.behavior_sim)
 
@@ -59,6 +59,27 @@ class FS_Threshold(UBCFBase):
 
         return np.where(placeholder, sim, behavior_sim)
 
+    def recommend(self, u, k, nitem):
+
+        rank = dict()
+
+        u_rating_items = [item for item, rating in self.trainset.ur[u]]
+        # 获得用户于其它所有用户的相似度
+        neighbors = [item for item in enumerate(self.fusion_sim[u])]
+
+        # 获得K近邻
+        k_neighbors = sorted(neighbors, key=lambda x:x[1], reverse=True)[0:k]
+
+        for v, wuv in k_neighbors:
+            for item, rating in self.trainset.ur[v]:
+                if item in u_rating_items:
+                    continue
+                rank.setdefault(item, 0)
+                rank[item] += wuv * rating
+
+
+        rank = sorted(rank.items(), key=lambda x: x[1], reverse=True)[0:nitem]
+        return [item for item, rating in rank]
 
 if __name__ == '__main__':
 
