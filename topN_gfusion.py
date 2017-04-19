@@ -1,7 +1,7 @@
 # coding=utf-8
 from base import base
 
-class top_Fusion(base):
+class topN_gfusion(base):
 
     def __init__(self, alpha=0.5, k=40, min_k=1, sim_options={}, **kwargs):
         base.__init__(self, alpha, k, min_k, sim_options, **kwargs)

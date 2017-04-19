@@ -151,7 +151,6 @@ class base(AlgoBase):
 
     def precisionAndRecallAndCoverage(self, testset, k, nitem):
 
-        print('precisionAndll')
         hit = 0
         precision = 0
         recall = 0
@@ -160,7 +159,6 @@ class base(AlgoBase):
         all_items = [item for item in self.trainset.all_items()]
 
         for user in self.trainset.all_users():
-            print('user ' + str(user))
             favorite = self.get_favorite_from_test(user, testset)
             recommend_list = self.recommend(user, k, nitem)
             for item in recommend_list:

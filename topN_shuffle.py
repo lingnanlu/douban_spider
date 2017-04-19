@@ -9,10 +9,10 @@ class topN_shuffle(base):
     def train(self, trainset):
         base.train(self, trainset)
 
-    def recommend(self, u, k, nitems):
+    def recommend(self, u, k, nitem):
 
-        rank1 = self.recommend_by_rating_matrix(k, u, nitems)
-        rank2 = self.recommend_by_behavior_matrix(k, u, nitems)
+        rank1 = self.recommend_by_rating_matrix(u, k, nitem)
+        rank2 = self.recommend_by_behavior_matrix(u, k, nitem)
 
         rank1 = [item for item, rating in rank1]
         rank2 = [item for item, rating in rank2]
@@ -25,7 +25,10 @@ class topN_shuffle(base):
         rank = list(rank)
         random.shuffle(rank)
 
-        return rank[0:nitems]
+
+        return rank[0:nitem]
+
+
 
 
 

@@ -1,4 +1,4 @@
-from topN_gfusion import top_Fusion
+from topN_gfusion import topN_gfusion
 from topN_sort import topN_sort
 from topN_shuffle import topN_shuffle
 from FS_Weight import FS_Weight
@@ -12,15 +12,14 @@ data = Dataset.load_from_folds([(train_file, test_file)], reader)
 
 trainset, testset = data.folds().next()
 
-algos=[topN_shuffle(), topN_sort()]
-# algos=[FS_Weight(), FS_Threshold(), top_Fusion()]
+algos=[FS_Weight(), FS_Threshold(), topN_gfusion(), topN_shuffle(), topN_sort()]
 
 for algo in algos:
 
     with open('result/topN_' + algo.__class__.__name__ + '.txt', mode='w') as f:
         print("testing " + algo.__class__.__name__)
         algo.train(trainset)
-        for k in [1]:
-            for nitem in [1]:
+        for k in [5, 10, 15, 20, 25]:
+            for nitem in [10, 20]:
                 precision, recall, coverage = algo.precisionAndRecallAndCoverage(testset, k, nitem)
                 f.write("%d,%d,%f,%f,%f\n" % (k, nitem, precision, recall, coverage))
