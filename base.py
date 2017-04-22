@@ -154,7 +154,6 @@ class base(AlgoBase):
         hit = 0
         precision = 0
         recall = 0
-
         recommend_items = set()
         all_items = [item for item in self.trainset.all_items()]
 
